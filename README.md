@@ -108,3 +108,82 @@ https://localhost:{puerto}/swagger
 ```
 
 Tambien puede usarse la URL HTTP configurada al iniciar el proyecto desde consola.
+
+## Uso con Docker
+
+La solucion incluye un `Dockerfile` multi-stage optimizado con imagen final basada en Alpine. El contenedor expone internamente el puerto `8080`.
+
+Construir la imagen:
+
+```powershell
+docker build -t banking-accounts-api:local .
+```
+
+Ejecutar el contenedor:
+
+```powershell
+docker run -d --name banking-accounts-api -p 8090:8080 banking-accounts-api:local
+```
+
+URL base usando Docker:
+
+```text
+http://localhost:8090
+```
+
+Generar un token JWT:
+
+```powershell
+Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8090/api/auth/token" `
+  -ContentType "application/json" `
+  -Body '{"username":"admin","password":"admin123"}'
+```
+
+Consumir un endpoint protegido:
+
+```powershell
+$tokenResponse = Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8090/api/auth/token" `
+  -ContentType "application/json" `
+  -Body '{"username":"admin","password":"admin123"}'
+
+$headers = @{ Authorization = "Bearer $($tokenResponse.accessToken)" }
+
+Invoke-RestMethod `
+  -Method Get `
+  -Uri "http://localhost:8090/api/accounts" `
+  -Headers $headers
+```
+
+Habilitar Swagger dentro del contenedor:
+
+Por defecto, Swagger solo se habilita en ambiente `Development`. Para verlo desde Docker, ejecutar el contenedor configurando `ASPNETCORE_ENVIRONMENT`:
+
+```powershell
+docker run -d --name banking-accounts-api-dev `
+  -p 8090:8080 `
+  -e ASPNETCORE_ENVIRONMENT=Development `
+  banking-accounts-api:local
+```
+
+Luego abrir:
+
+```text
+http://localhost:8090/swagger
+```
+
+Ver logs del contenedor:
+
+```powershell
+docker logs banking-accounts-api
+```
+
+Detener y eliminar el contenedor:
+
+```powershell
+docker stop banking-accounts-api
+docker rm banking-accounts-api
+```
