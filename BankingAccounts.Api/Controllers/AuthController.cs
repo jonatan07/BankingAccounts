@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Asp.Versioning;
 using BankingAccounts.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -11,7 +12,8 @@ namespace BankingAccounts.Api.Controllers;
 /// Expone operaciones de autenticacion basica mediante JWT.
 /// </summary>
 [ApiController]
-[Route("api/auth")]
+[ApiVersion(1)]
+[Route("api/v{version:apiVersion}/auth")]
 [Produces("application/json")]
 public sealed class AuthController(IConfiguration configuration) : ControllerBase
 {

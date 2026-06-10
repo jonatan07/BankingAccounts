@@ -24,7 +24,7 @@ La solucion esta pensada como una prueba de concepto clara y extensible para ope
 
 ## Endpoints
 
-La API expone endpoints para autenticacion y administracion de cuentas bancarias.
+La API expone endpoints versionados para autenticacion y administracion de cuentas bancarias.
 
 Base URL local sugerida:
 
@@ -33,6 +33,40 @@ http://localhost:5088
 ```
 
 Swagger:
+
+```text
+/swagger
+```
+
+Version actual:
+
+```text
+/api/v1
+```
+
+## Versionamiento del API
+
+El API usa versionamiento por segmento de URL mediante `Asp.Versioning`, siguiendo la convencion comun de ASP.NET Core para contratos REST publicos.
+
+Formato de rutas:
+
+```text
+/api/v{version}/{recurso}
+```
+
+La version vigente es `v1`. Los clientes deben consumir los endpoints usando el prefijo `/api/v1`, por ejemplo:
+
+```text
+/api/v1/accounts
+```
+
+Swagger publica la documentacion por version:
+
+```text
+/swagger/v1/swagger.json
+```
+
+La interfaz Swagger en ambiente `Development` lista automaticamente las versiones disponibles desde:
 
 ```text
 /swagger
@@ -80,12 +114,12 @@ Descripcion:
 
 | Verbo | Nombre de endpoint | Parametros | Respuesta | Descripcion de la funcionalidad |
 | --- | --- | --- | --- | --- |
-| POST | `/api/auth/token` | Body: `username`, `password` | `200 OK` con `accessToken` y `expiresAtUtc`; `401 Unauthorized` si las credenciales son invalidas | Genera un token JWT para consumir los endpoints protegidos. |
-| GET | `/api/accounts` | Header: `Authorization: Bearer {token}` | `200 OK` con lista de cuentas; `401 Unauthorized` | Obtiene todas las cuentas bancarias registradas. |
-| GET | `/api/accounts/{id}` | Route: `id` tipo `Guid`; Header JWT | `200 OK` con cuenta; `404 Not Found`; `401 Unauthorized` | Obtiene una cuenta bancaria especifica por identificador. |
-| POST | `/api/accounts` | Header JWT; Body: `accountNumber`, `holderName`, `balance`, `currency` | `201 Created` con cuenta creada; `400 Bad Request`; `409 Conflict`; `401 Unauthorized` | Crea una nueva cuenta bancaria validando que el numero de cuenta no exista. |
-| PUT | `/api/accounts/{id}` | Route: `id` tipo `Guid`; Header JWT; Body: `accountNumber`, `holderName`, `balance`, `currency`, `isActive` | `200 OK` con cuenta actualizada; `400 Bad Request`; `404 Not Found`; `409 Conflict`; `401 Unauthorized` | Actualiza los datos de una cuenta bancaria existente. |
-| DELETE | `/api/accounts/{id}` | Route: `id` tipo `Guid`; Header JWT | `204 No Content`; `404 Not Found`; `401 Unauthorized` | Elimina una cuenta bancaria existente por identificador. |
+| POST | `/api/v1/auth/token` | Body: `username`, `password` | `200 OK` con `accessToken` y `expiresAtUtc`; `401 Unauthorized` si las credenciales son invalidas | Genera un token JWT para consumir los endpoints protegidos. |
+| GET | `/api/v1/accounts` | Header: `Authorization: Bearer {token}` | `200 OK` con lista de cuentas; `401 Unauthorized` | Obtiene todas las cuentas bancarias registradas. |
+| GET | `/api/v1/accounts/{id}` | Route: `id` tipo `Guid`; Header JWT | `200 OK` con cuenta; `404 Not Found`; `401 Unauthorized` | Obtiene una cuenta bancaria especifica por identificador. |
+| POST | `/api/v1/accounts` | Header JWT; Body: `accountNumber`, `holderName`, `balance`, `currency` | `201 Created` con cuenta creada; `400 Bad Request`; `409 Conflict`; `401 Unauthorized` | Crea una nueva cuenta bancaria validando que el numero de cuenta no exista. |
+| PUT | `/api/v1/accounts/{id}` | Route: `id` tipo `Guid`; Header JWT; Body: `accountNumber`, `holderName`, `balance`, `currency`, `isActive` | `200 OK` con cuenta actualizada; `400 Bad Request`; `404 Not Found`; `409 Conflict`; `401 Unauthorized` | Actualiza los datos de una cuenta bancaria existente. |
+| DELETE | `/api/v1/accounts/{id}` | Route: `id` tipo `Guid`; Header JWT | `204 No Content`; `404 Not Found`; `401 Unauthorized` | Elimina una cuenta bancaria existente por identificador. |
 
 ## Ejecucion local
 
@@ -136,7 +170,7 @@ Generar un token JWT:
 ```powershell
 Invoke-RestMethod `
   -Method Post `
-  -Uri "http://localhost:8090/api/auth/token" `
+  -Uri "http://localhost:8090/api/v1/auth/token" `
   -ContentType "application/json" `
   -Body '{"username":"admin","password":"admin123"}'
 ```
@@ -146,7 +180,7 @@ Consumir un endpoint protegido:
 ```powershell
 $tokenResponse = Invoke-RestMethod `
   -Method Post `
-  -Uri "http://localhost:8090/api/auth/token" `
+  -Uri "http://localhost:8090/api/v1/auth/token" `
   -ContentType "application/json" `
   -Body '{"username":"admin","password":"admin123"}'
 
@@ -154,7 +188,7 @@ $headers = @{ Authorization = "Bearer $($tokenResponse.accessToken)" }
 
 Invoke-RestMethod `
   -Method Get `
-  -Uri "http://localhost:8090/api/accounts" `
+  -Uri "http://localhost:8090/api/v1/accounts" `
   -Headers $headers
 ```
 

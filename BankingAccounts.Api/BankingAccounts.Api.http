@@ -1,6 +1,17 @@
 @BankingAccounts.Api_HostAddress = http://localhost:5065
 
-GET {{BankingAccounts.Api_HostAddress}}/weatherforecast/
+POST {{BankingAccounts.Api_HostAddress}}/api/v1/auth/token
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+
+###
+
+GET {{BankingAccounts.Api_HostAddress}}/api/v1/accounts
 Accept: application/json
+Authorization: Bearer {{accessToken}}
 
 ###

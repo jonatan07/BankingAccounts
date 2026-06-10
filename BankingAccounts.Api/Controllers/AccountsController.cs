@@ -1,5 +1,6 @@
 using BankingAccounts.Application.Accounts.Dtos;
 using BankingAccounts.Application.Services;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,8 +10,9 @@ namespace BankingAccounts.Api.Controllers;
 /// Expone operaciones CRUD para administrar cuentas bancarias.
 /// </summary>
 [ApiController]
+[ApiVersion(1)]
 [Authorize]
-[Route("api/accounts")]
+[Route("api/v{version:apiVersion}/accounts")]
 [Produces("application/json")]
 public sealed class AccountsController(IBankAccountService bankAccountService) : ControllerBase
 {

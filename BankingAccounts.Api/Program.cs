@@ -1,9 +1,11 @@
 using System.Text;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using BankingAccounts.Application;
+using BankingAccounts.Api.Swagger;
 using BankingAccounts.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Instrumentation.Http;
@@ -52,6 +54,21 @@ try
     });
 
     builder.Services.AddControllers();
+    builder.Services
+        .AddApiVersioning(options =>
+        {
+            options.DefaultApiVersion = new ApiVersion(1);
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ReportApiVersions = true;
+            options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        })
+        .AddMvc()
+        .AddApiExplorer(options =>
+        {
+            options.GroupNameFormat = "'v'VVV";
+            options.SubstituteApiVersionInUrl = true;
+        });
+
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure();
 
@@ -107,37 +124,11 @@ try
     builder.Services.AddAuthorization();
 
     builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen(options =>
-    {
-        options.SwaggerDoc("v1", new OpenApiInfo
-        {
-            Title = "Banking Accounts API",
-            Version = "v1",
-            Description = "REST API para manejo de cuentas bancarias con CQRS, Unit of Work y EF Core InMemory."
-        });
-
-        var securityScheme = new OpenApiSecurityScheme
-        {
-            Name = "Authorization",
-            Description = "JWT Bearer. Ejemplo: Bearer {token}",
-            In = ParameterLocation.Header,
-            Type = SecuritySchemeType.Http,
-            Scheme = "bearer",
-            BearerFormat = "JWT"
-        };
-
-        options.AddSecurityDefinition("Bearer", securityScheme);
-        options.AddSecurityRequirement(_ => new OpenApiSecurityRequirement
-        {
-            { new OpenApiSecuritySchemeReference("Bearer", null, null), new List<string>() }
-        });
-
-        var xmlFile = $"{typeof(Program).Assembly.GetName().Name}.xml";
-        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-        options.IncludeXmlComments(xmlPath);
-    });
+    builder.Services.AddSwaggerGen();
+    builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 
     var app = builder.Build();
+    var apiVersionDescriptionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
     app.UseSerilogRequestLogging(options =>
     {
@@ -152,7 +143,15 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
-        app.UseSwaggerUI();
+        app.UseSwaggerUI(options =>
+        {
+            foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
+            {
+                options.SwaggerEndpoint(
+                    $"/swagger/{description.GroupName}/swagger.json",
+                    $"Banking Accounts API {description.GroupName.ToUpperInvariant()}");
+            }
+        });
     }
 
     app.UseHttpsRedirection();
